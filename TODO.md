@@ -5,6 +5,7 @@
 - [x] Design system: "light technical" tokens (paper surfaces, ink text, teal accent, IBM Plex Sans/Mono) in `src/styles.css`
 - [x] Server-side Lovable AI gateway helper (`src/lib/ai-gateway.server.ts`)
 - [x] AI SQL generation server function with structured output + error handling (`src/lib/sql.functions.ts`)
+- [x] Strict schema enforcement on AI output (fixes `line` vs `sql` parsing error)
 - [x] Prompt workspace: natural-language input, dialect selector, schema context, example prompts
 - [x] Voice input (Web Speech API) with multilingual language selector
 - [x] SQL editor panel: syntax highlighting, line numbers, copy SQL, download `.sql`
@@ -13,7 +14,7 @@
 - [x] Assumptions/summary surface for AI-inferred tables and columns
 - [x] Page metadata (title, description, OG/Twitter tags)
 
-## To Do
+## In Progress / Next Up
 
 - [ ] User authentication: login, register, profile (Lovable Cloud)
 - [ ] Saved query history per user
