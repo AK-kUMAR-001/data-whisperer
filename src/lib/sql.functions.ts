@@ -14,7 +14,9 @@ export const generateSql = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured for this project.");
 
-    const gateway = createLovableAiGatewayProvider(apiKey);
+    const gateway = createLovableAiGatewayProvider(apiKey, undefined, {
+      structuredOutputs: true,
+    });
 
     const prompt = [
       `Target dialect: ${data.dialect}`,
