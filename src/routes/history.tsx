@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, XCircle, History as HistoryIcon, Loader2 } from "lucide-react";
 import { TopNav } from "@/components/dolphin/TopNav";
 import { highlightSql } from "@/components/dolphin/sql-highlight";
-import { listHistory } from "@/lib/dolphin.functions";
+import { listHistory } from "@/lib/dolphin.data";
 
 const title = "Query History — Dolphin AI Studio";
 const description =
@@ -34,7 +33,7 @@ type Row = {
 };
 
 function HistoryPage() {
-  const fetchHistory = useServerFn(listHistory);
+  const fetchHistory = listHistory;
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
 

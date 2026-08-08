@@ -29,13 +29,13 @@ import {
   AiExplanationPanel,
   type ExplanationStep,
 } from "@/components/dolphin/AiExplanationPanel";
+import { explainQuery } from "@/lib/dolphin.functions";
 import {
   listProblems,
   checkAnswer,
   getExpectedOutput,
   getProgress,
-  explainQuery,
-} from "@/lib/dolphin.functions";
+} from "@/lib/dolphin.data";
 
 const title = "Practice Mode — Dolphin AI Studio";
 const description =
@@ -62,10 +62,10 @@ const DIFF_STYLES: Record<string, string> = {
 };
 
 function PracticeMode() {
-  const fetchProblems = useServerFn(listProblems);
-  const submit = useServerFn(checkAnswer);
-  const fetchExpected = useServerFn(getExpectedOutput);
-  const fetchProgress = useServerFn(getProgress);
+  const fetchProblems = listProblems;
+  const submit = checkAnswer;
+  const fetchExpected = getExpectedOutput;
+  const fetchProgress = getProgress;
   const explain = useServerFn(explainQuery);
 
   const [problems, setProblems] = useState<Problem[]>([]);

@@ -11,7 +11,8 @@ import {
   AiExplanationPanel,
   type ExplanationStep,
 } from "@/components/dolphin/AiExplanationPanel";
-import { generateSql, runQuery } from "@/lib/dolphin.functions";
+import { generateSql } from "@/lib/dolphin.functions";
+import { runQuery } from "@/lib/dolphin.data";
 
 const title = "Dolphin AI Studio — SQL Workspace Hub";
 const description =
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/")({
 
 function Workspace() {
   const generate = useServerFn(generateSql);
-  const run = useServerFn(runQuery);
+  const run = runQuery;
 
   const [prompt, setPrompt] = useState(
     "Show top 10 customers who spent the most money in the last 3 months.",

@@ -11,7 +11,7 @@ export type GeneratedQuery = {
   notes: string;
 };
 
-export type Cell = string | number | boolean | null;
+export type { Cell } from "./demo-db";
 
 export type QueryResult = {
   columns: string[];
@@ -87,13 +87,14 @@ export async function generateSqlFromPrompt(
   const raw = await callGateway([
     {
       role: "system",
-      content: `You are a senior PostgreSQL engineer inside "Dolphin AI Studio".
+      content: `You are a senior SQL engineer inside "Dolphin AI Studio".
 Translate the user's natural-language request into ONE read-only SQL SELECT statement for this schema:
 
 ${DEMO_SCHEMA}
 
 Rules:
-- PostgreSQL syntax only. Never use INSERT/UPDATE/DELETE/DDL.
+- Portable SQLite-compatible SQL only (the query runs on an in-app SQLite engine). Never use INSERT/UPDATE/DELETE/DDL.
+- Do not use Postgres-only syntax (no INTERVAL, ::casts, DATE_TRUNC). For relative dates use date('now','-3 month').
 - Reference tables without a schema prefix.
 - Do not end the statement with a semicolon.
 - Always add a sensible LIMIT when the result could be large.
@@ -140,40 +141,4 @@ Reply as JSON: {"explanation": [{"code": string, "text": string}]} — one item 
         .filter((s) => s && typeof s.text === "string")
         .map((s) => ({ code: String(s.code ?? ""), text: String(s.text) }))
     : [];
-}
-
-export async function runReadOnlySql(sql: string): Promise<QueryResult> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const started = Date.now();
-  const { data, error } = await supabaseAdmin.rpc("exec_demo_readonly", {
-    query_text: sql,
-  });
-  const durationMs = Date.now() - started;
-  if (error) throw new Error(error.message);
-
-  const raw = (Array.isArray(data) ? data : []) as Record<string, unknown>[];
-  const rows = raw.map((row) => {
-    const out: Record<string, Cell> = {};
-    for (const [key, value] of Object.entries(row)) {
-      out[key] =
-        value === null || value === undefined
-          ? null
-          : typeof value === "object"
-            ? JSON.stringify(value)
-            : (value as Cell);
-    }
-    return out;
-  });
-  const columns = rows.length > 0 ? Object.keys(rows[0]!) : [];
-  return { columns, rows, rowCount: rows.length, durationMs };
-}
-
-export function normalizeRows(rows: Record<string, Cell>[]): string {
-  return JSON.stringify(
-    rows.map((row) =>
-      Object.keys(row)
-        .sort()
-        .map((k) => String(row[k] ?? "")),
-    ),
-  );
 }
