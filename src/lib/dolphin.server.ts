@@ -11,7 +11,9 @@ export type GeneratedQuery = {
   notes: string;
 };
 
-export type { Cell } from "./demo-db";
+import type { Cell } from "./demo-db";
+
+export type { Cell };
 
 export type QueryResult = {
   columns: string[];
