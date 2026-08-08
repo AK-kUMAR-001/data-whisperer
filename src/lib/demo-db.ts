@@ -150,13 +150,13 @@ type SqlJsDb = {
 let dbPromise: Promise<SqlJsDb> | null = null;
 
 async function getDb(): Promise<SqlJsDb> {
+  if (typeof window === "undefined") {
+    throw new Error("The demo database only runs in the browser.");
+  }
   if (!dbPromise) {
     dbPromise = (async () => {
-      const [{ default: initSqlJs }, wasmUrl] = await Promise.all([
-        import("sql.js"),
-        import("sql.js/dist/sql-wasm.wasm?url").then((m) => m.default as string),
-      ]);
-      const SQL = await initSqlJs({ locateFile: () => wasmUrl });
+      const { default: initSqlJs } = await import("sql.js");
+      const SQL = await initSqlJs({ locateFile: () => "/wasm/sql-wasm.wasm" });
       const db = new SQL.Database() as unknown as SqlJsDb;
       db.exec(SEED_SQL);
       return db;
