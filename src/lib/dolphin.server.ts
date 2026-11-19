@@ -12,6 +12,7 @@ export type GeneratedQuery = {
 };
 
 import type { Cell } from "./demo-db";
+import { normalizeSchema, type DesignSchema } from "./designer";
 
 export type { Cell };
 
@@ -129,7 +130,7 @@ export async function explainSql(sql: string): Promise<ExplanationStep[]> {
   const raw = await callGateway([
     {
       role: "system",
-      content: `You review PostgreSQL queries against this schema:
+      content: `You review SQLite queries against this schema:
 
 ${DEMO_SCHEMA}
 
@@ -143,4 +144,33 @@ Reply as JSON: {"explanation": [{"code": string, "text": string}]} — one item 
         .filter((s) => s && typeof s.text === "string")
         .map((s) => ({ code: String(s.code ?? ""), text: String(s.text) }))
     : [];
+}
+
+export async function designSchemaFromPrompt(prompt: string, dialect: string): Promise<DesignSchema> {
+  const raw = await callGateway([
+    {
+      role: "system",
+      content: `You are a senior database architect inside "Dolphin AI Studio".
+Design a normalized (3NF) relational schema for the user's requirements, targeting ${dialect}.
+
+Rules:
+- snake_case names; plural table names; every table has exactly one primary key column named <singular>_id of type INT.
+- Use only these types: INT, BIGINT, VARCHAR(n), TEXT, DECIMAL(p,s), DATE, DATETIME, TIMESTAMP, BOOLEAN.
+- Foreign keys reference the parent's primary key and every referenced table must exist in "tables".
+- Add useful indexes on foreign keys and frequent filters (only on existing columns).
+- Between 3 and 25 tables.
+
+Reply as JSON:
+{"database": string,
+ "tables": [{"name": string, "columns": [{"name": string, "type": string, "pk": boolean, "nullable": boolean, "unique": boolean, "references": {"table": string, "column": string} | null}]}],
+ "indexes": [{"table": string, "columns": [string], "unique": boolean}],
+ "views": [string],
+ "notes": string}
+"notes" is one or two sentences about the design decisions.`,
+    },
+    { role: "user", content: prompt },
+  ]);
+  const schema = normalizeSchema(parseJson<unknown>(raw), new Date().toISOString());
+  if (schema.tables.length === 0) throw new Error("The AI could not design tables for that description.");
+  return schema;
 }

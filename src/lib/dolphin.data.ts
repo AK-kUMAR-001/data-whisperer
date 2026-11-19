@@ -22,6 +22,11 @@ type Attempt = { problem_id: string; is_correct: boolean };
 
 const HISTORY_KEY = "dolphin.history";
 const ATTEMPTS_KEY = "dolphin.attempts";
+const BOOKMARKS_KEY = "dolphin.bookmarks";
+const PENDING_KEY = "dolphin.pendingQuery";
+
+/** Fired on window whenever locally stored data changes. */
+export const DATA_EVENT = "dolphin:data-changed";
 
 function read<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
@@ -37,6 +42,7 @@ function write<T>(key: string, rows: T[]) {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, JSON.stringify(rows.slice(0, 200)));
+    window.dispatchEvent(new Event(DATA_EVENT));
   } catch {
     /* storage full or unavailable — history is best-effort */
   }
@@ -133,4 +139,56 @@ export async function getProgress() {
       .map((a) => a.problem_id),
   ).size;
   return { solved, total: PRACTICE_PROBLEMS.length };
+}
+
+export async function getSolvedIds(): Promise<string[]> {
+  return [
+    ...new Set(
+      read<Attempt>(ATTEMPTS_KEY)
+        .filter((a) => a.is_correct)
+        .map((a) => a.problem_id),
+    ),
+  ];
+}
+
+export function deleteHistory(id: string) {
+  write(
+    HISTORY_KEY,
+    read<HistoryRow>(HISTORY_KEY).filter((r) => r.id !== id),
+  );
+}
+
+export function clearHistory() {
+  write(HISTORY_KEY, []);
+}
+
+export function resetProgress() {
+  write(ATTEMPTS_KEY, []);
+}
+
+export function getBookmarks(): string[] {
+  return read<string>(BOOKMARKS_KEY);
+}
+
+export function toggleBookmark(id: string): string[] {
+  const current = read<string>(BOOKMARKS_KEY);
+  const next = current.includes(id) ? current.filter((b) => b !== id) : [id, ...current];
+  write(BOOKMARKS_KEY, next);
+  return next;
+}
+
+/** Hand a query from another page (e.g. History) to the Workspace. */
+export function setPendingQuery(q: { prompt: string; sql: string }) {
+  window.localStorage.setItem(PENDING_KEY, JSON.stringify(q));
+}
+
+export function takePendingQuery(): { prompt: string; sql: string } | null {
+  const raw = window.localStorage.getItem(PENDING_KEY);
+  if (!raw) return null;
+  window.localStorage.removeItem(PENDING_KEY);
+  try {
+    return JSON.parse(raw) as { prompt: string; sql: string };
+  } catch {
+    return null;
+  }
 }

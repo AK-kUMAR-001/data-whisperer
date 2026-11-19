@@ -19,3 +19,17 @@ export const explainQuery = createServerFn({ method: "POST" })
     const { explainSql } = await import("./dolphin.server");
     return { explanation: await explainSql(data.sql) };
   });
+
+export const generateSchema = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        prompt: z.string().min(5).max(3000),
+        dialect: z.enum(["MySQL", "PostgreSQL", "SQLite"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { designSchemaFromPrompt } = await import("./dolphin.server");
+    return designSchemaFromPrompt(data.prompt, data.dialect);
+  });
